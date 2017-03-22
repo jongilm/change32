@@ -349,7 +349,7 @@ int main(int argc, char* argv[])
    outfile = fopen(outfilename,"wb");
    if (!outfile) 
    {
-      puts("ERROR: Cannot open outfile (-? for help)");
+      printf("ERROR: Cannot open outfile (-? for help) \"%s\"\n",outfilename);
       exit(1);
    }
    fwrite(buffer,1,Filesize,outfile);
