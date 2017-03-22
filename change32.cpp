@@ -113,6 +113,20 @@ char *TranslateEscapes ( char *pStr )
    return pStr;
 }
 
+int isspecial(char ch)
+{
+	if (ch == '@') return 1;
+	if (ch == '.') return 1;
+	if (ch == '%') return 1;
+	if (ch == '$') return 1;
+	if (ch == '!') return 1;
+	if (ch == ':') return 1;
+	if (ch == '/') return 1;
+	if (ch == '\\') return 1;
+	if (ch == ';') return 1;
+	return 0;
+}
+
 char *FindWord(char *pData,char *buffer,unsigned long Filesize)
 {
    static char szWord[1024];
@@ -120,7 +134,7 @@ char *FindWord(char *pData,char *buffer,unsigned long Filesize)
    int Len;
    int FindLine = 1;
 
-   if(iscsym(*pData))
+   if(iscsym(*pData) || isspecial(*pData))
       FindLine = 0;
 
    if (FindLine)
@@ -130,7 +144,7 @@ char *FindWord(char *pData,char *buffer,unsigned long Filesize)
    }
    else
    {
-      while(iscsym(*pData))
+      while(iscsym(*pData) || isspecial(*pData))
          pData--;
    }
 
@@ -146,7 +160,7 @@ char *FindWord(char *pData,char *buffer,unsigned long Filesize)
    }
    else
    {
-      while(iscsym(*pData)) //while(isgraph(*pData))
+      while(iscsym(*pData) || isspecial(*pData)) //while(isgraph(*pData))
          pData++;
    }
 
@@ -223,7 +237,7 @@ int main(int argc, char* argv[])
       else
       {
          if (!infilename[0]) 
-            strcpy(infilename,argv[1]);
+            strcpy(infilename,argv[i]);
          else
          {
             puts("ERROR: Cannot specify more than one input filename (-? for help)");
@@ -244,11 +258,20 @@ int main(int argc, char* argv[])
    if (!outfilename[0])
       strcpy(outfilename,infilename);
 
+   if (verbose)
+   {
+      printf("InFile = \"%s\"\n",infilename);
+      printf("OutFile = \"%s\"\n",outfilename);
+      printf("Replacing %d string(s):\n",repl);
+      for(i=0;i<repl;i++)
+         printf("  %2d: \"%s\" -> \"%s\"\n",i+1,chg[i].oldstringarg,chg[i].newstringarg);
+   }
+
 
    infile  = fopen(infilename,"rb");
    if (!infile) 
    {
-      puts("ERROR: Cannot open infile (-? for help)");
+      printf("ERROR: Cannot open infile \"%s\" (-? for help)",infilename);
       exit(1);
    }
    Filesize = _filelength(_fileno(infile));
@@ -272,7 +295,7 @@ int main(int argc, char* argv[])
       printf("%s",infilename);
    if (fread(buffer,1,Filesize,infile) != Filesize)
    {
-      printf("ERROR: Error reading infile\n");
+      printf("ERROR: Error reading infile \"%s\"\n",infilename);
       exit(1);
    }
    fclose(infile);
@@ -282,7 +305,7 @@ int main(int argc, char* argv[])
       if (verbose)
          printf("\nReplacement %d/%d. (\"%s\" -> \"%s\")\n",i+1,repl+1,chg[i].oldstringarg,chg[i].newstringarg);
       else
-         printf(" %d:",i+1);
+         printf(" \tString %d:\t",i+1);
       test_from_ptr = buffer;
       for(;;)
       {
@@ -314,7 +337,7 @@ int main(int argc, char* argv[])
          //   printf("\rSearch=%ld, Changes=%ld",test_from_ptr-buffer,chg[i].OccurancesChanged);
       }
       if (!verbose)
-         printf("%ld",chg[i].OccurancesChanged);
+         printf("%ld occurances replaced.",chg[i].OccurancesChanged);
    }
 
    //if (verbose)
